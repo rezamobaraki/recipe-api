@@ -1,3 +1,77 @@
+# Recipe API SQLite Queries
+
+# Schema
+CREATE_TABLES = '''
+CREATE TABLE IF NOT EXISTS recipes (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS recipe_ingredients (
+    recipe_id TEXT NOT NULL,
+    raw_text TEXT NOT NULL,
+    canonical_name TEXT,
+    FOREIGN KEY (recipe_id) REFERENCES recipes(id)
+);
+
+CREATE TABLE IF NOT EXISTS ingredient_match (
+    ingredient_a TEXT NOT NULL,
+    ingredient_b TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    PRIMARY KEY (ingredient_a, ingredient_b)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ingredient_match_a ON ingredient_match(ingredient_a);
+'''
+
+# Data operations
+INSERT_RECIPE = 'INSERT OR IGNORE INTO recipes VALUES (?, ?, ?, ?)'
+INSERT_INGREDIENT = 'INSERT INTO recipe_ingredients VALUES (?, ?, ?)'
+
+BUILD_MATCHES = '''
+INSERT OR REPLACE INTO ingredient_match 
+SELECT a.canonical_name, b.canonical_name, COUNT(*)
+FROM recipe_ingredients a
+JOIN recipe_ingredients b ON a.recipe_id = b.recipe_id
+WHERE a.canonical_name != b.canonical_name
+  AND a.canonical_name IS NOT NULL 
+  AND b.canonical_name IS NOT NULL
+GROUP BY a.canonical_name, b.canonical_name
+'''
+
+GET_MATCHES = '''
+SELECT ingredient_b as ingredient, count 
+FROM ingredient_match 
+WHERE ingredient_a = ? 
+ORDER BY count DESC LIMIT ?
+'''
+
+FIND_BY_INGREDIENTS = '''
+SELECT r.id, r.title, r.name,
+       GROUP_CONCAT(ri.canonical_name) as canonical_names,
+       GROUP_CONCAT(ri.raw_text) as raw_texts
+FROM recipes r
+JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+WHERE ri.canonical_name IN ({placeholders})
+GROUP BY r.id
+ORDER BY COUNT(ri.canonical_name) DESC
+LIMIT ?
+'''
+
+FIND_BY_TITLE = '''
+SELECT r.id, r.title, r.name,
+       GROUP_CONCAT(ri.canonical_name) as canonical_names,
+       GROUP_CONCAT(ri.raw_text) as raw_texts
+FROM recipes r
+JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+WHERE r.title LIKE ? COLLATE NOCASE
+GROUP BY r.id
+LIMIT ?
+'''
+
+# Original flight capacity queries below
 CREATE_TABLES_SCRIPT = """
     CREATE TABLE IF NOT EXISTS events (
         flight_id TEXT,

@@ -57,7 +57,7 @@ DO UPDATE SET count = EXCLUDED.count;
 
 GET_INGREDIENT_MATCHES = """
 SELECT ingredient_b AS ingredient, count
-FROM ingredient_cooccurrence
+FROM ingredient_match
 WHERE ingredient_a = %(ingredient)s
 ORDER BY count DESC
 LIMIT %(top_n)s;

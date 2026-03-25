@@ -9,6 +9,10 @@ class Settings:
     INGREDIENTS_PATH: Path = DATA_DIR / "ingredient-list.json"
 
     POSTGRES_URL: str = "postgresql://user:pass@localhost:5432/recipes"
+    SQLITE_DB_PATH: str = str(BASE_DIR / "data" / "recipes.db")
+    
+    # Database type: 'postgres' or 'sqlite'
+    DATABASE_TYPE: str = "sqlite"
 
     REDIS_URL: str = "redis://localhost:6379"
     REDIS_TTL: int = 3600

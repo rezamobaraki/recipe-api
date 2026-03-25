@@ -1,6 +1,7 @@
 from src.core.settings import Settings, SETTINGS
 from src.core.redis_cache import RedisCache
 from src.repositories.postgres_repository import PostgresRepository
+from src.repositories.sqlite_repository import SQLiteRepository
 from src.services.match_service import MatchService
 from src.services.duplicate_service import DuplicateService
 from src.services.ingest_service import IngestService
@@ -15,10 +16,17 @@ class ContainerRegistry:
             ttl=self.settings.REDIS_TTL,
         )
 
-        self.repository = PostgresRepository(
-            dsn=self.settings.POSTGRES_URL,
-            cache=self.cache,
-        )
+        # Choose database based on configuration
+        if self.settings.DATABASE_TYPE.lower() == "sqlite":
+            self.repository = SQLiteRepository(
+                db_path=self.settings.SQLITE_DB_PATH,
+                cache=self.cache,
+            )
+        else:
+            self.repository = PostgresRepository(
+                dsn=self.settings.POSTGRES_URL,
+                cache=self.cache,
+            )
 
         self.match_service = MatchService(self.repository)
         self.duplicate_service = DuplicateService(self.repository)
