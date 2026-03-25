@@ -4,15 +4,15 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 
-from src.core.container import container
-from src.core.exception_handlers import setup_exception_handlers
+from src.core.containers import Containers
+from src.core.exception_handler import setup_exception_handlers
 from src.handlers.http import health, match, duplicate
 
 
 def create_app() -> FastAPI:
     logging.basicConfig(
-        level=container.settings.LOG_LEVEL,
-        format=container.settings.LOG_FORMAT,
+        level=Containers.settings.LOG_LEVEL,
+        format=Containers.settings.LOG_FORMAT,
     )
 
     app = FastAPI(

@@ -1,4 +1,4 @@
-from src.core.settings import Settings, get_settings
+from src.core.settings import Settings, SETTINGS
 from src.core.redis_cache import RedisCache
 from src.repositories.postgres_repository import PostgresRepository
 from src.services.match_service import MatchService
@@ -6,9 +6,9 @@ from src.services.duplicate_service import DuplicateService
 from src.services.ingest_service import IngestService
 
 
-class Container:
+class ContainerRegistry:
     def __init__(self, settings: Settings | None = None) -> None:
-        self.settings = settings or get_settings()
+        self.settings = settings or SETTINGS
 
         self.cache = RedisCache(
             redis_url=self.settings.REDIS_URL,
@@ -29,4 +29,4 @@ class Container:
         )
 
 
-container = Container()
+Containers = ContainerRegistry()

@@ -6,7 +6,7 @@ import psycopg2.extras
 
 from src.core.redis_cache import RedisCache
 from src.domains import Ingredient, IngredientMatch, Recipe
-from src.repositories import RepositoryProtocol
+from .protocol import RepositoryProtocol
 from src.repositories.queries.postgres import (
     BUILD_INGREDIENT_MATCHES,
     BULK_INSERT_INGREDIENT,
@@ -68,13 +68,9 @@ class PostgresRepository(RepositoryProtocol):
         with self._get_conn() as conn:
             with conn.cursor() as cur:
                 psycopg2.extras.execute_values(cur, BULK_INSERT_RECIPE, recipe_rows)
-                psycopg2.extras.execute_values(
-                    cur, BULK_INSERT_INGREDIENT, ingredient_rows
-                )
+                psycopg2.extras.execute_values(cur, BULK_INSERT_INGREDIENT, ingredient_rows)
 
-        logger.info(
-            f"Inserted {len(recipe_rows)} recipes, {len(ingredient_rows)} ingredients"
-        )
+        logger.info(f"Inserted {len(recipe_rows)} recipes, {len(ingredient_rows)} ingredients")
         return len(recipe_rows)
 
     def build_ingredient_matches(self) -> int:
@@ -86,12 +82,8 @@ class PostgresRepository(RepositoryProtocol):
         logger.info(f"Built {count} ingredient match pairs")
         return count
 
-    def get_ingredient_matches(
-        self, ingredient: str, top_n: int = 10
-    ) -> list[IngredientMatch]:
-        key = RedisCache.make_key(
-            "ingredient_match", ingredient=ingredient, top_n=top_n
-        )
+    def get_ingredient_matches(self, ingredient: str, top_n: int = 10) -> list[IngredientMatch]:
+        key = RedisCache.make_key("ingredient_match", ingredient=ingredient, top_n=top_n)
 
         if cached := self._cache.get(key):
             logger.debug(f"Cache hit for ingredient: {ingredient}")
@@ -114,9 +106,7 @@ class PostgresRepository(RepositoryProtocol):
         logger.debug(f"Cache set for ingredient: {ingredient}")
         return result
 
-    def search_recipes_by_ingredients(
-        self, ingredients: list[str], limit: int = 20
-    ) -> list[Recipe]:
+    def search_recipes_by_ingredients(self, ingredients: list[str], limit: int = 20) -> list[Recipe]:
         with self._get_conn() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(

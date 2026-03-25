@@ -1,11 +1,11 @@
 import typer
 
-from src.core.containers import container
+from src.core.containers import Containers
 
 cli = typer.Typer()
 
 
 @cli.command()
 def ingest() -> None:
-    container.ingest_service.run()
+    Containers.ingest_service.run()
     typer.echo("✓ Ingest complete")

@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from src.core.container import container
-from src.core.exceptions import IngredientNotFoundError
+from src.core.containers import Containers
 from src.schemas.requests import MatchRequest
 from src.schemas.responses import MatchResponse, IngredientMatchResponse, ErrorResponse
 
@@ -14,7 +13,7 @@ router = APIRouter(prefix="/api", tags=["matches"])
     responses={404: {"model": ErrorResponse}},
 )
 async def get_ingredient_matches(params: MatchRequest = Depends()) -> MatchResponse:
-    result = container.match_service.get_matches(
+    result = Containers.match_service.get_matches(
         ingredient=params.ingredient,
         top_n=params.top_n,
     )
