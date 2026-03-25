@@ -1,20 +1,19 @@
 from pathlib import Path
+from functools import cache
 
 
 class Settings:
-    BASE_DIR: Path = Path(__file__).resolve().parent.parent
-    DATA_DIR: Path = BASE_DIR.parent / "data"
+    BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
+    DATA_DIR: Path = BASE_DIR / "data"
 
-    #POSTGRES
+    RECIPES_PATH: Path = DATA_DIR / "allrecipes-sample.json"
+    INGREDIENTS_PATH: Path = DATA_DIR / "ingredient-list.json"
+
     POSTGRES_URL: str = "postgresql://user:pass@localhost:5432/recipes"
 
-    # Redis
     REDIS_URL: str = "redis://localhost:6379"
-    REDIS_TTL: int = 3600  # 1 hour cache
+    REDIS_TTL: int = 3600
 
-    # Data paths
-    RECIPES_PATH: Path = ...
-    INGREDIENTS_PATH: Path = ...
 
-    LOG_LEVEL: str = "INFO"
-    LOG_FORMAT: str = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+settings = Settings()
+

@@ -1,15 +1,14 @@
-from schemas.responses.capacity import CapacityResponse
-from schemas.responses.capacity_list import CapacityListResponse
-from schemas.responses.daily_summary import DailySummaryResponse
-from schemas.responses.daily_summary_list import DailySummaryListResponse
-from schemas.responses.error import ErrorResponse
-from schemas.responses.health import HealthResponse
+from .error import ErrorResponse
+from .health import HealthResponse
+from .match_response import MatchResponse, IngredientMatchResponse
+from .duplicate_response import DuplicateResponse, RecipeDuplicateResponse
+
 
 __all__ = (
-    "CapacityListResponse",
-    "CapacityResponse",
-    "DailySummaryListResponse",
-    "DailySummaryResponse",
+    "MatchResponse",
+    "DuplicateResponse",
+    "IngredientMatchResponse",
+    "RecipeDuplicateResponse",
     "ErrorResponse",
-    "HealthResponse",
+    "HealthResponse"
 )

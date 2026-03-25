@@ -1,7 +1,9 @@
-from src.schemas.requests.capacity import CapacityRequest
-from src.schemas.requests.capacity_summary import CapacitySummaryRequest
+from .match_request import MatchRequest
+from .duplicate_request import DuplicateRequest, DuplicateIngredient, RecipePayload
 
 __all__ = (
-    "CapacityRequest",
-    "CapacitySummaryRequest",
+    "MatchRequest",
+    "DuplicateRequest",
+    "DuplicateIngredient",
+    "RecipePayload",
 )

@@ -1,23 +1,20 @@
 import logging
-from typing import Iterable, Iterator
+from typing import Iterable
 
 import psycopg2
 import psycopg2.extras
 
-from src.domains import (
-    Ingredient,
-    IngredientMatch,
-    Recipe,
-)
+from src.core.redis_cache import RedisCache
+from src.domains import Ingredient, IngredientMatch, Recipe
 from src.repositories import RepositoryProtocol
 from src.repositories.queries.postgres import (
-    CREATE_RECIPES_TABLE,
-    CREATE_INGREDIENTS_TABLE,
-    CREATE_INGREDIENT_MATCH_TABLE,
-    CREATE_INGREDIENT_MATCH_INDEX,
-    BULK_INSERT_RECIPE,
-    BULK_INSERT_INGREDIENT,
     BUILD_INGREDIENT_MATCHES,
+    BULK_INSERT_INGREDIENT,
+    BULK_INSERT_RECIPE,
+    CREATE_INGREDIENT_MATCH_INDEX,
+    CREATE_INGREDIENT_MATCH_TABLE,
+    CREATE_INGREDIENTS_TABLE,
+    CREATE_RECIPES_TABLE,
     GET_INGREDIENT_MATCHES,
     SEARCH_RECIPES_BY_INGREDIENTS,
     SEARCH_RECIPES_BY_TITLE,
@@ -27,11 +24,12 @@ logger = logging.getLogger(__name__)
 
 
 class PostgresRepository(RepositoryProtocol):
-    def __init__(self, dsn: str):
+    def __init__(self, dsn: str, cache: RedisCache) -> None:
         self._dsn = dsn
-        self._conn = None
+        self._cache = cache
+        self._conn: psycopg2.extensions.connection | None = None
 
-    def _get_conn(self):
+    def _get_conn(self) -> psycopg2.extensions.connection:
         if self._conn is None or self._conn.closed:
             self._conn = psycopg2.connect(self._dsn)
         return self._conn
@@ -75,9 +73,7 @@ class PostgresRepository(RepositoryProtocol):
                 )
 
         logger.info(
-            "Inserted %d recipes, %d ingredients",
-            len(recipe_rows),
-            len(ingredient_rows),
+            f"Inserted {len(recipe_rows)} recipes, {len(ingredient_rows)} ingredients"
         )
         return len(recipe_rows)
 
@@ -87,12 +83,20 @@ class PostgresRepository(RepositoryProtocol):
                 cur.execute(BUILD_INGREDIENT_MATCHES)
                 count = cur.rowcount
 
-        logger.info("Built ingredient match index: %d pairs", count)
+        logger.info(f"Built {count} ingredient match pairs")
         return count
 
     def get_ingredient_matches(
         self, ingredient: str, top_n: int = 10
     ) -> list[IngredientMatch]:
+        key = RedisCache.make_key(
+            "ingredient_match", ingredient=ingredient, top_n=top_n
+        )
+
+        if cached := self._cache.get(key):
+            logger.debug(f"Cache hit for ingredient: {ingredient}")
+            return [IngredientMatch(**item) for item in cached["matches"]]
+
         with self._get_conn() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(
@@ -104,7 +108,11 @@ class PostgresRepository(RepositoryProtocol):
                 )
                 rows = cur.fetchall()
 
-        return [IngredientMatch(**row) for row in rows]
+        result = [IngredientMatch(**row) for row in rows]
+        self._cache.set(key, {"matches": [r.model_dump() for r in result]})
+
+        logger.debug(f"Cache set for ingredient: {ingredient}")
+        return result
 
     def search_recipes_by_ingredients(
         self, ingredients: list[str], limit: int = 20
