@@ -3,6 +3,7 @@ from src.core.redis_cache import RedisCache
 from src.repositories.postgres_repository import PostgresRepository
 from src.services.match_service import MatchService
 from src.services.duplicate_service import DuplicateService
+from src.services.ingest_service import IngestService
 
 
 class Container:
@@ -21,6 +22,11 @@ class Container:
 
         self.match_service = MatchService(self.repository)
         self.duplicate_service = DuplicateService(self.repository)
+        self.ingest_service = IngestService(
+            repository=self.repository,
+            recipes_path=self.settings.RECIPES_PATH,
+            ingredients_path=self.settings.INGREDIENTS_PATH,
+        )
 
 
 container = Container()

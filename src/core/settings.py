@@ -1,5 +1,4 @@
 from pathlib import Path
-from functools import cache
 
 
 class Settings:
@@ -14,6 +13,8 @@ class Settings:
     REDIS_URL: str = "redis://localhost:6379"
     REDIS_TTL: int = 3600
 
+    LOG_LEVEL: str = "INFO"
+    LOG_FORMAT: str = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+
 
 settings = Settings()
-

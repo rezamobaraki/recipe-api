@@ -1,11 +1,20 @@
 [project]
-name = "recipe-api"
+name = "flight-capacity-pipeline"
 version = "0.1.0"
-description = "Add your description here"
-requires-python = ">=3.14"
+description = "Cargo capacity calculator for airline flight data"
+requires-python = ">=3.10"
 dependencies = [
-    "fastapi>=0.135.2",
-    "ruff>=0.15.7",
-    "uvicorn>=0.42.0",
-
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "pydantic>=2.10.0",
+    "typer>=0.24.1",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.15.7",
+]
+
+[tool.ruff]
+line-length = 120
