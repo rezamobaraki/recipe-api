@@ -1,8 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from src.domains.ingredient import Ingredient
 
 
 class Recipe(BaseModel):
     id: str
     title: str
     name: str
-    ingredients: list[Ingredient]
+    description: str = ""
+    ingredients: list[Ingredient] = Field(default_factory=list)

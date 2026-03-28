@@ -1,10 +1,12 @@
 import json
 import logging
 import re
+from collections.abc import Iterator
 from pathlib import Path
 
 from src.domains import Ingredient, Recipe
-from src.repositories import RepositoryProtocol
+from src.repositories import SQLiteRepository
+from src.services.ingredient_key_service import IngredientKeyService
 
 logger = logging.getLogger(__name__)
 
@@ -12,34 +14,25 @@ logger = logging.getLogger(__name__)
 class IngestService:
     def __init__(
         self,
-        repository: RepositoryProtocol,
+        repository: SQLiteRepository,
         recipes_path: Path,
-        ingredients_path: Path,
+        ingredient_key_service: IngredientKeyService,
     ) -> None:
         self._repository = repository
         self._recipes_path = recipes_path
-        self._ingredients_path = ingredients_path
-        self._known_terms: list[str] = []
+        self._ingredient_key_service = ingredient_key_service
 
     def run(self) -> None:
         self._repository.initialize()
+        self._repository.reset_recipe_data()
 
-        self._known_terms = self._load_known_terms()
-        logger.info(f"Loaded {len(self._known_terms)} known ingredient terms")
-
-        recipes = list(self._parse_recipes())
-        count = self._repository.bulk_insert_recipes(recipes)
+        count = self._repository.bulk_insert_recipes(self._parse_recipes())
         logger.info(f"Inserted {count} recipes")
 
-        match_count = self._repository.build_ingredient_matches()
-        logger.info(f"Built {match_count} ingredient match pairs")
+        cooccurrence_count = self._repository.build_ingredient_cooccurrences()
+        logger.info(f"Built {cooccurrence_count} ingredient co-occurrence pairs")
 
-    def _load_known_terms(self) -> list[str]:
-        raw = json.loads(self._ingredients_path.read_text(encoding="utf-8"))
-        terms = [entry["term"].strip().lower() for entry in raw]
-        return sorted(terms, key=len, reverse=True)
-
-    def _parse_recipes(self):
+    def _parse_recipes(self) -> Iterator[Recipe]:
         content = self._recipes_path.read_text(encoding="utf-8")
         content = re.sub(r",\s*]", "]", content)
 
@@ -47,7 +40,7 @@ class IngestService:
             ingredients = [
                 Ingredient(
                     raw_text=raw_text,
-                    canonical_name=self._extract_canonical(raw_text),
+                    normalized_key=self._ingredient_key_service.normalize(raw_text),
                 )
                 for raw_text in raw.get("ingredients", [])
             ]
@@ -55,20 +48,6 @@ class IngestService:
                 id=raw["id"],
                 title=raw.get("title") or raw.get("name", ""),
                 name=raw.get("name", ""),
+                description=raw.get("description") or "",
                 ingredients=ingredients,
             )
-
-    def _extract_canonical(self, raw: str) -> str | None:
-        text = raw.lower().strip()
-        text = re.sub(r"^[\d\s/¼½¾⅓⅔⅛⅜⅝⅞,.-]+", "", text).strip()
-        text = re.sub(
-            r"^(cups?|tablespoons?|tbsp|teaspoons?|tsp|ounces?|oz|pounds?|lbs?|"
-            r"grams?|kg|liters?|ml|pinch(?:es)?|cloves?|slices?|pieces?|cans?|"
-            r"large|medium|small|fresh|dried|ground|whole|chopped|minced|"
-            r"sliced|diced|cooked|optional)\s+",
-            "",
-            text,
-            flags=re.IGNORECASE,
-        ).strip()
-
-        return next((term for term in self._known_terms if term in text), None)

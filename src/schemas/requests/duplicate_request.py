@@ -6,10 +6,10 @@ class DuplicateIngredient(BaseModel):
     quantity: str
 
 
-class DuplicateRequest(BaseModel):
-    recipe: RecipePayload
-
-
 class RecipePayload(BaseModel):
     name: str
     ingredients: list[DuplicateIngredient]
+
+
+class DuplicateRequest(BaseModel):
+    recipe: RecipePayload

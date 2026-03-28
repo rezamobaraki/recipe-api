@@ -1,8 +1,5 @@
-
-from src.repositories.postgres_repository import PostgresRepository
-from src.repositories.protocol import RepositoryProtocol
+from src.repositories.sqlite_repository import SQLiteRepository
 
 __all__ = (
-    "RepositoryProtocol",
-    "PostgresRepository",
+    "SQLiteRepository",
 )

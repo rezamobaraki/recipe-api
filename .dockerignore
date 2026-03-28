@@ -1,0 +1,13 @@
+.git
+.gitignore
+.idea
+.pytest_cache
+.ruff_cache
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+.DS_Store
+test_main.http

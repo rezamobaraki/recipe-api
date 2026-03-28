@@ -1,15 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "flight-capacity-pipeline"
+name = "recipe-intelligence-api"
 version = "0.1.0"
-description = "Cargo capacity calculator for airline flight data"
+description = "PoC API for recipe ingredient co-occurrence and duplicate detection"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.34.0",
     "pydantic>=2.10.0",
-    "typer>=0.24.1",
-    "redis>=7.4",
-    "psycopg2-binary>=2.9.11",
 ]
 
 [project.optional-dependencies]
@@ -18,5 +19,12 @@ dev = [
     "ruff>=0.15.7",
 ]
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
 [tool.ruff]
 line-length = 120
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

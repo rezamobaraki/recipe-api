@@ -1,13 +1,16 @@
 from .error import ErrorResponse
 from .health import HealthResponse
-from .match_response import MatchResponse, IngredientMatchResponse
+from .cooccurrence_response import (
+    IngredientCooccurrenceItemResponse,
+    IngredientCooccurrenceResponse,
+)
 from .duplicate_response import DuplicateResponse, RecipeDuplicateResponse
 
 
 __all__ = (
-    "MatchResponse",
+    "IngredientCooccurrenceResponse",
+    "IngredientCooccurrenceItemResponse",
     "DuplicateResponse",
-    "IngredientMatchResponse",
     "RecipeDuplicateResponse",
     "ErrorResponse",
     "HealthResponse"

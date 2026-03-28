@@ -1,24 +1,24 @@
+import os
 from pathlib import Path
 
 
 class Settings:
     BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
-    DATA_DIR: Path = BASE_DIR / "data"
+    DATA_DIR: Path = Path(os.getenv("DATA_DIR", str(BASE_DIR / "data")))
 
-    RECIPES_PATH: Path = DATA_DIR / "allrecipes-sample.json"
-    INGREDIENTS_PATH: Path = DATA_DIR / "ingredient-list.json"
+    RECIPES_PATH: Path = Path(
+        os.getenv(
+            "RECIPES_PATH",
+            str(DATA_DIR / "allrecipes.com_database_12042020000000.json"),
+        )
+    )
+    SQLITE_DB_PATH: str = os.getenv("SQLITE_DB_PATH", str(BASE_DIR / "data" / "recipes.db"))
 
-    POSTGRES_URL: str = "postgresql://user:pass@localhost:5432/recipes"
-    SQLITE_DB_PATH: str = str(BASE_DIR / "data" / "recipes.db")
-    
-    # Database type: 'postgres' or 'sqlite'
-    DATABASE_TYPE: str = "sqlite"
-
-    REDIS_URL: str = "redis://localhost:6379"
-    REDIS_TTL: int = 3600
-
-    LOG_LEVEL: str = "INFO"
-    LOG_FORMAT: str = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    LOG_FORMAT: str = os.getenv(
+        "LOG_FORMAT",
+        "%(asctime)s | %(name)s | %(levelname)s | %(message)s",
+    )
 
 
 SETTINGS = Settings()

@@ -1,8 +1,8 @@
-from .match_request import MatchRequest
-from .duplicate_request import DuplicateRequest, DuplicateIngredient, RecipePayload
+from .cooccurrence_request import IngredientCooccurrenceRequest
+from .duplicate_request import DuplicateIngredient, DuplicateRequest, RecipePayload
 
 __all__ = (
-    "MatchRequest",
+    "IngredientCooccurrenceRequest",
     "DuplicateRequest",
     "DuplicateIngredient",
     "RecipePayload",

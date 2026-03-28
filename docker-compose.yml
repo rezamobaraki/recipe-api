@@ -1,0 +1,48 @@
+services:
+  api:
+    build:
+      context: .
+      target: dev
+    command: uvicorn src.main:create_app --factory --host 0.0.0.0 --port 8000 --reload
+    environment:
+      LOG_LEVEL: INFO
+      DATA_DIR: /app/data
+      SQLITE_DB_PATH: /app/data/recipes.db
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./src:/app/src
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  ingest:
+    build:
+      context: .
+      target: dev
+    command: python -m src.cli ingest
+    environment:
+      DATA_DIR: /app/data
+      SQLITE_DB_PATH: /app/data/recipes.db
+    volumes:
+      - ./data:/app/data
+      - ./src:/app/src
+    restart: "no"
+
+  test:
+    build:
+      context: .
+      target: dev
+    command: pytest tests/ -v
+    environment:
+      DATA_DIR: /app/data
+      SQLITE_DB_PATH: /app/data/recipes.db
+    volumes:
+      - ./data:/app/data
+      - ./src:/app/src
+      - ./tests:/app/tests

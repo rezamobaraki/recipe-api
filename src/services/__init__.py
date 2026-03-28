@@ -1,9 +1,11 @@
+from src.services.cooccurrence_service import CooccurrenceService
 from src.services.duplicate_service import DuplicateService
+from src.services.ingredient_key_service import IngredientKeyService
 from src.services.ingest_service import IngestService
-from src.services.match_service import MatchService
 
 __all__ = (
-    "MatchService",
+    "CooccurrenceService",
+    "IngredientKeyService",
     "IngestService",
     "DuplicateService",
 )
