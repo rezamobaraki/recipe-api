@@ -244,3 +244,73 @@ Why this level is appropriate for optional scope:
   - `ingest` one-shot service
   - `test` service for pytest
 - Runtime config is environment-driven (`DATA_DIR`, `SQLITE_DB_PATH`, `LOG_LEVEL`).
+
+---
+
+## 8. Future Improvement: Inverted Index
+
+An **inverted index** maps each term to the set of documents (recipes) containing it:
+
+```text
+"cinnamon"  → {recipe_1, recipe_2, recipe_3, recipe_4, recipe_5}
+"sugar"     → {recipe_1, recipe_2, recipe_4, recipe_5}
+"salt"      → {recipe_3, recipe_6}
+```
+
+### 8.1 Task 1 — Already Implicit
+
+The `recipe_ingredients` table with `(recipe_id, normalized_key)` already functions as an inverted index.
+The self-join in `BUILD_COOCCURRENCES` exploits this: for every recipe containing ingredient A, find all other ingredients B in the same recipe.
+
+The pre-computed `ingredient_cooccurrence` table makes query time O(1), so no further optimization is needed at the query layer.
+
+### 8.2 Task 2 — Major Opportunity
+
+The current `DuplicateService` loads **all** recipes and computes TF-IDF similarity against each one — O(n) per request.
+
+With an inverted index the query only visits recipes that share at least one token with the input:
+
+```text
+token → [(recipe_id, tfidf_weight), ...]
+```
+
+At query time:
+
+1. Tokenize the input recipe.
+2. For each query token, look up the posting list from the inverted index.
+3. Accumulate dot-product scores only for recipes that appear in those lists.
+4. Return the top-k scored candidates.
+
+This reduces complexity from O(n) to O(k) where k ≪ n (only recipes sharing tokens with the query).
+
+```
+# Build once at ingest time:
+# token → list of (recipe_id, tf_score)
+inverted_index = {
+    "cinnamon": [(recipe_4, 0.3), (recipe_5, 0.25), (recipe_1, 0.2), ...],
+    "flour":    [(recipe_4, 0.4), (recipe_5, 0.35), ...],
+    "bread":    [(recipe_4, 0.5), (recipe_5, 0.45), ...],
+}
+
+# At query time for "Cinnamon Bun Bread" with ingredients [flour, sugar, cinnamon]:
+query_tokens = ["cinnamon", "bun", "bread", "flour", "sugar"]
+
+candidate_scores = Counter()
+for token in query_tokens:
+    for recipe_id, tf_score in inverted_index[token]:  # only recipes with this token
+        candidate_scores[recipe_id] += query_tfidf[token] * tf_score
+
+# Only score recipes that share at least one token — typically << 68k
+
+```
+
+### 8.3 Comparison
+
+| Aspect | Current PoC | With Inverted Index |
+|---|---|---|
+| Task 1 query | O(1) pre-computed | Same — already optimal |
+| Task 2 query | O(n) brute-force scan | O(k) — only matching recipes |
+| Task 2 build | None (on-the-fly) | One-time index build at ingest |
+| Complexity | Minimal | Moderate — index storage + update logic |
+
+For production scale, the next step beyond an inverted index would be vector embeddings with approximate nearest neighbor search (FAISS or pgvector).
